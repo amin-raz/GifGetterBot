@@ -49,4 +49,4 @@ async def convert(interaction: discord.Interaction, video: discord.Attachment):
         if os.path.exists(gif_path):
             os.remove(gif_path)
 
-client.run(os.environ['DISCORD_TOKEN'])
+client.run(os.environ['DISCORD_CLIENT_SECRET'])
