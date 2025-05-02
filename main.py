@@ -103,6 +103,7 @@ async def convert(interaction: discord.Interaction, video: discord.Attachment):
             if os.path.exists(f):
                 os.remove(f)
 
+
 # —————————————————————————
 # /youtubegif: YouTube URL → GIF
 # —————————————————————————
@@ -113,31 +114,49 @@ async def convert(interaction: discord.Interaction, video: discord.Attachment):
     end_time="HH:MM:SS or seconds"
 )
 async def youtubegif(interaction: discord.Interaction, url: str, start_time: str, end_time: str):
-    await interaction.response.send_message("Downloading and converting video…")
     raw_video = "temp_video.mp4"
     palette   = "temp_palette.png"
     gif_path  = "temp_clip.gif"
 
-    # Download video-only (no merging needed)
+    # Step 1: get true duration without downloading
+    try:
+        with YoutubeDL({'quiet': True}) as ydl:
+            info = ydl.extract_info(url, download=False)
+        total_duration = info.get('duration')
+        if total_duration is None:
+            raise RuntimeError("No duration info")
+    except Exception as e:
+        return await interaction.response.send_message(
+            f"❌ Error Code 1006: Could not read video info – {e}"
+        )
+
+    # Parse and validate times
+    start = to_secs(start_time)
+    end   = to_secs(end_time)
+    if start is None or end is None or start >= end:
+        return await interaction.response.send_message(
+            "❌ Error Code 1001: Invalid time or start ≥ end."
+        )
+    if start < 0 or end > total_duration:
+        return await interaction.response.send_message(
+            f"❌ Error Code 1002: Times out of range (video is {total_duration:.1f}s long)."
+        )
+
+    await interaction.response.send_message("Downloading and converting video…")
+
+    # Step 2: download the video-only stream
     ydl_opts = {
         'format': 'bestvideo[ext=mp4]',
         'outtmpl': raw_video,
         'quiet': True,
     }
-
     try:
-        # Download
         with YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
 
-        # Time parse & validation
-        start = to_secs(start_time)
-        end   = to_secs(end_time)
-        if start is None or end is None or start >= end:
-            return await interaction.followup.send("❌ Error Code 1001: Invalid time or start ≥ end.")
         duration = end - start
 
-        # Generate palette for the clip
+        # Palette generation for the clip
         p1 = await asyncio.create_subprocess_exec(
             FFMPEG, "-y", "-ss", str(start), "-i", raw_video,
             "-t", str(duration),
@@ -177,6 +196,7 @@ async def youtubegif(interaction: discord.Interaction, url: str, start_time: str
         for f in (raw_video, palette, gif_path):
             if os.path.exists(f):
                 os.remove(f)
+
 
 # Run the bot
 client.run(os.environ['DISCORD_BOT_TOKEN'])
