@@ -12,9 +12,6 @@ __pycache__/
 ffmpeg-static.tar.xz
 ffmpeg-*-static/
 
-# Ignore extracted FFmpeg directory
-ffmpeg-7.0.2/
-
 # Ignore UPM directory and lock files (if present)
 .upm/
 uv.lock
