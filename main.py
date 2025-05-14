@@ -145,7 +145,7 @@ async def on_guild_join(guild: discord.Guild):
         "You can create GIFs from video files or URLs.\n"
         "Try these commands to get started:\n"
         f"  `/linkgif url:<your_video_url> start_time:0:10 end_time:0:15` (Max duration {MAX_GIF_DURATION}s)\n"
-        "  `/fileconvert` (and attach a video file)\n"
+        "  `/filegif` (and attach a video file)\n"
         "  `/help` for a full list of commands and options.\n\n"
         "I'll try to auto-crop black bars!"
     )
@@ -327,8 +327,8 @@ async def process_and_convert_to_gif(
                 try: os.remove(f_path); print(f"Cleaned: {f_path}")
                 except Exception as e_del: print(f"Warn: Failed to delete {f_path}: {e_del}")
 
-# --- /fileconvert command ---
-@tree.command(name="fileconvert", description=f"Convert an uploaded video file to GIF. Max {MAX_GIF_DURATION}s.")
+# --- /filegif command ---
+@tree.command(name="filegif", description=f"Convert an uploaded video file to GIF. Max {MAX_GIF_DURATION}s.")
 @app_commands.describe(
     video_file="Video file to convert (MP4, MOV, AVI, MKV, WEBM)",
     start_time="Start time (e.g., HH:MM:SS, MM:SS, or seconds like 30)",
@@ -336,7 +336,7 @@ async def process_and_convert_to_gif(
     output_destination="Choose where to send the generated GIF (default: Discord)"
 )
 @app_commands.choices(output_destination=OutputDestinationChoices)
-async def fileconvert(
+async def filegif(
     interaction: discord.Interaction,
     video_file: discord.Attachment,
     start_time: str,
@@ -388,7 +388,7 @@ async def fileconvert(
     except Exception as e: 
         traceback.print_exc()
         err_msg = str(e)
-        content = f"❌ Error Code 2005c: Unexpected error in fileconvert: {err_msg[:1000]}"
+        content = f"❌ Error Code 2005c: Unexpected error in filegif: {err_msg[:1000]}"
         if interaction.response.is_done(): 
             await interaction.edit_original_response(content=content, attachments=[], view=None)
         else: 
@@ -507,7 +507,7 @@ async def linkgif(
 @tree.command(name="help", description="Shows information about how to use the GIF bot.")
 async def help_command(interaction: discord.Interaction):
     embed = discord.Embed(
-        title="🎬 GIF Bot Help",
+        title="🎬 GifGetter Help",
         description=(
             f"Hello! I can convert videos into GIFs. My auto-cropping feature will attempt to remove black bars!\n\n"
             f"**GIF Settings:**\n"
@@ -522,17 +522,12 @@ async def help_command(interaction: discord.Interaction):
     embed.set_thumbnail(url=client.user.display_avatar.url if client.user else None)
 
     embed.add_field(
-        name="`/fileconvert` - Convert an Uploaded Video File",
-        value=(
-        ),
-        inline=False
-    )
-
-    embed.add_field(
-        name="`/linkgif` - Convert a Video from a URL",
-        value=(
-            "**Supported URLs:** YouTube, Twitter (X), Reddit, TikTok, Vimeo, Twitch clips, direct video links (MP4, WEBM), public Google Drive links, Litterbox links.\n"
-        ),
+        name="**Commands:**",
+        value=("`/filegif` - Convert an Uploaded Video File\n"
+               "- **DISCLAIMER:** Only works for small files, for bigger files use other command.\n"
+               "`/linkgif` - Convert a Video from a URL\n"
+               "- **Supported URLs:** YouTube, Twitter (X), Reddit, TikTok, Vimeo, Twitch clips, direct video links (MP4, WEBM), public Google Drive links, Litterbox links.\n"
+              ), 
         inline=False
     )
 
@@ -546,9 +541,9 @@ async def help_command(interaction: discord.Interaction):
     )
 
     embed.add_field(
-        name="📦 Handling Large Local Source Files (Too big for `/fileconvert` direct upload)",
+        name="📦 Handling Files Too Big for Direct Upload)",
         value=(
-            "If your local video file is too large to attach to the `/fileconvert` command (e.g., >25MB or your Discord upload limit):\n"
+            "If your local video file is too large to attach to the `/filegif` command (e.g., >25MB or your Discord upload limit):\n"
             "1. Upload your large video file to a service like [Litterbox](https://litterbox.catbox.moe/) or [Google Drive](https://drive.google.com/) (ensure the link is public/sharable).\n"
             "2. Copy the **direct link** to your uploaded video.\n"
             "3. Use the `/linkgif` command with this direct link in the `url` parameter."
@@ -556,7 +551,7 @@ async def help_command(interaction: discord.Interaction):
         inline=False
     )
 
-    embed.set_footer(text="Use /fileconvert or /linkgif to get started!")
+    embed.set_footer(text="Use /filegif or /linkgif to get started!")
     await interaction.response.send_message(embed=embed, ephemeral=True) # Help command itself is ephemeral
 
 
